@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PizzaMar</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--red:#e53935;--dark:#171717;--card:#242424;--muted:#aaa;--bg:#111}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:#fff}
+button,input,select{font:inherit}button{cursor:pointer;border:0}
+.screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login{width:min(430px,100%);background:#1c1c1c;border-radius:24px;padding:30px;box-shadow:0 20px 60px #0008}
+.logo{font-size:40px;font-weight:900;text-align:center}.logo span{color:var(--red)}
+.sub{text-align:center;color:var(--muted);margin:4px 0 28px}
+label{display:block;color:#ccc;font-size:14px;margin:14px 0 6px}input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#111;color:#fff}
+.btn{width:100%;padding:15px;border-radius:12px;background:var(--red);color:#fff;font-weight:800;margin-top:18px}.linkbtn{display:block;width:100%;margin-top:14px;background:transparent;color:#ff7777;text-decoration:underline;padding:8px}.error{color:#ff8b8b;margin-top:12px;font-size:14px}
+.hidden{display:none!important}
+.splash{background:radial-gradient(circle at 50% 35%,#57201b,#120d0c 55%,#080808);text-align:center}
+.splash .pizza{font-size:90px}.splash h1{font-size:48px;margin:0}.splash p{color:#ddd}.open{width:min(340px,90%);padding:18px;border-radius:15px;background:var(--red);color:#fff;font-weight:900;font-size:18px;margin-top:30px}
+header{padding:18px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;background:#181818;position:sticky;top:0;z-index:2}
+.header-logo{font-weight:900;font-size:25px}.header-logo span{color:var(--red)}
+.container{max-width:1100px;margin:auto;padding:20px}.status{color:#72e6a3;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px}.tile{background:var(--card);border:1px solid #333;border-radius:18px;padding:22px;min-height:120px;text-align:left;color:#fff}.tile b{display:block;font-size:18px;margin-top:10px}.tile small{color:var(--muted)}
+.panel{background:var(--card);border-radius:18px;padding:20px;margin-top:18px;border:1px solid #333}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.product{padding:14px;border-radius:14px;background:#191919;border:1px solid #383838;color:#fff;text-align:left}.product strong{display:block}.price{color:#ff7777;font-weight:800;margin-top:5px}.back{background:#333;color:#fff;padding:10px 14px;border-radius:10px}.logout{background:#333;color:#fff;padding:9px 12px;border-radius:10px}
+</style>
+</head>
+<body>
+
+<div id="login" class="screen">
+  <div class="login">
+    <div class="logo">Pizza<span>Mar</span> 🍕</div>
+    <div class="sub">Sistema de gestión</div>
+    <label>Email / Usuario</label><input id="email" type="email" autocomplete="username" placeholder="tu@email.com">
+    <label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn" onclick="login()">INGRESAR</button>
+    <button class="linkbtn" onclick="showRecovery()">¿Olvidaste tu contraseña?</button>
+    <div id="loginError" class="error"></div>
+  </div>
+</div>
+
+<div id="recovery" class="screen hidden">
+  <div class="login">
+    <div class="logo">Pizza<span>Mar</span> 🍕</div>
+    <div class="sub">Recuperar contraseña</div>
+    <label>Email / Usuario</label><input id="recoveryEmail" type="email" autocomplete="email" placeholder="tu@email.com">
+    <button class="btn" onclick="sendRecovery()">ENVIAR CORREO</button>
+    <button class="linkbtn" onclick="showLogin()">← Volver al ingreso</button>
+    <div id="recoveryMsg" class="error"></div>
+  </div>
+</div>
+
+<div id="reset" class="screen hidden">
+  <div class="login">
+    <div class="logo">Pizza<span>Mar</span> 🍕</div>
+    <div class="sub">Crear nueva contraseña</div>
+    <label>Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+    <label>Repetir contraseña</label><input id="newPassword2" type="password" autocomplete="new-password" placeholder="Repetí la contraseña">
+    <button class="btn" onclick="updatePassword()">GUARDAR NUEVA CONTRASEÑA</button>
+    <div id="resetMsg" class="error"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<div id="splash" class="screen splash">
+  <div>
+    <div class="pizza">🍕</div>
+    <h1>Pizza<span style="color:#e53935">Mar</span></h1>
+    <p>El sabor de todos los días</p>
+    <button class="open" onclick="openLocal()">ABRIR LOCAL</button>
+  </div>
+</div>
+<div id="dashboard" class="hidden">
+<header><div class="header-logo">Pizza<span>Mar</span></div><div><span class="status">● Local abierto</span> <button class="logout" onclick="logout()">Salir</button></div></header>
+<div class="container">
+  <div id="home">
+    <h1>Panel principal</h1><p style="color:#aaa">Bienvenido a PizzaMar</p>
+    <div class="grid">
+      <button class="tile" onclick="show('orders')">🧾<b>Nueva comanda</b><small>Cargar pedido</small></button>
+      <button class="tile" onclick="show('sales')">💰<b>Ventas</b><small>Ventas del local</small></button>
+      <button class="tile" onclick="show('stats')">📊<b>Estadísticas</b><small>Rendimiento</small></button>
+      <button class="tile" onclick="show('products')">📦<b>Productos</b><small>Menú y precios</small></button>
+      <button class="tile" onclick="show('expenses')">💸<b>Gastos</b><small>Registrar gastos</small></button>
+      <button class="tile">🪑<b>Salón / Mesas</b><small>Próximamente</small></button>
+      <button class="tile">⚙️<b>Configuración</b><small>Usuarios y sistema</small></button>
+      <button class="tile" onclick="closeLocal()">🔴<b>Cerrar local</b><small>Cierre diario</small></button>
+    </div>
+    <div class="panel"><div class="row"><b>Estado de hoy</b><span id="today"></span></div><p>Ventas: <b id="homeSales">$0</b> · Pedidos: <b id="homeOrders">0</b></p></div>
+  </div>
+
+  <div id="orders" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Nueva comanda</h2><div id="productButtons" class="products"></div><hr><div class="row"><h3>Pedido</h3><b id="total">$0</b></div><div id="cart"></div><label>Nombre del cliente</label><input id="customer" placeholder="Nombre"><label>Forma de pago</label><select id="payment"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select><button class="btn" onclick="saveOrder()">GUARDAR COMANDA</button><div id="orderMsg" class="error"></div></div></div>
+
+  <div id="sales" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Ventas</h2><h1 id="salesTotal">$0</h1><p id="salesCount">0 pedidos</p></div></div>
+  <div id="stats" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Estadísticas</h2><p>Esta primera versión ya deja preparada la base para ventas, pedidos, productos y gastos. El tablero avanzado se agrega sobre estos datos.</p></div></div>
+  <div id="products" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Productos</h2><div id="allProducts" class="products"></div></div></div>
+  <div id="expenses" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Gastos</h2><label>Concepto</label><input id="expenseName" placeholder="Ej. harina"><label>Importe</label><input id="expenseAmount" type="number" placeholder="0"><button class="btn" onclick="saveExpense()">REGISTRAR GASTO</button><div id="expenseMsg" class="error"></div></div></div>
+</div>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://nqfyxdptyqviyqlkulzq.supabase.co";
+const SUPABASE_KEY="sb_publishable_79TQSkWMhsZ8DJldFxAIxA_cubFt0l-";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const products=[
+["Muzza",11000],["Muzza doble",12500],["Panceta ahumada",16500],["Súper especial",17000],["Choclo con huevo y tomate",15000],["PizzaPay",13000],["Fugazzeta",13000],["Jamón y morrón",14500],["Jamón y morrón con huevo",15000],["Caprese",14000],["Jamón y tomate",14500],["Jamón y huevo",14500],["Albahaca y Cherry",14000],["Rúcula, jamón crudo y queso parmesano",16000],["Huevo",13000],["Salchi & Huevo",14500],["Roquefort",14500],["Cochina",16000],["Anchoas",14500],["Especial de anchoas",15000],["Jamón",12500],["Choclo",13500],["Napolitana",13500],
+["Empanada carne x12",23000],["Empanada carne x6",13000],["Empanada carne unidad",2500],["Empanada pollo x12",21000],["Empanada pollo x6",12000],["Empanada pollo unidad",2000],["Empanada JyQ x12",19000],["Empanada JyQ x6",10800],["Empanada JyQ unidad",1800],
+["Hamburguesa cheddar+panceta simple",9500],["Hamburguesa cheddar+panceta doble",12000],["Hamburguesa cheddar+panceta triple",14500],["Hamburguesa completa",12500],
+["Coca 2,25L",6000],["Coca 1,25L",4500],["Coca lata",2000],["Coca 600ml",2500],["Cepita",3500],["Manaos",2000],["Schneider 710ml",4500],["Brahma lata",3000],
+["Milanesa con fritas",23000],["Porción de fritas",3500],
+["Promo 2 Muzzas",21000],["Promo 2 Muzzas + Coca 2,25L",25500],["Promo 2 Muzzas + 2 Brahma",26500],["Promo Muzza + 2 Brahma",15000],["Promo Muzza + 6 empanadas carne",21500],["Promo 2 especiales + Muzza + Coca",44000]
+];
+let cart=[];
+
+function money(n){return "$"+Number(n).toLocaleString("es-AR")}
+function show(id){document.querySelectorAll("#app .container>div").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");if(id==="products")renderProducts();if(id==="orders")renderButtons();if(id==="sales")loadSummary();}
+function renderButtons(){document.getElementById("productButtons").innerHTML=products.map((p,i)=>`<button class="product" onclick="add(${i})"><strong>${p[0]}</strong><span class="price">${money(p[1])}</span></button>`).join("");}
+function renderProducts(){document.getElementById("allProducts").innerHTML=products.map(p=>`<div class="product"><strong>${p[0]}</strong><span class="price">${money(p[1])}</span></div>`).join("");}
+function add(i){cart.push(products[i]);renderCart()}
+function renderCart(){document.getElementById("cart").innerHTML=cart.map((p,i)=>`<div class="row" style="padding:7px 0"><span>${p[0]}</span><span>${money(p[1])} <button onclick="cart.splice(${i},1);renderCart()" style="background:#333;color:#fff;border-radius:7px">×</button></span></div>`).join("");document.getElementById("total").textContent=money(cart.reduce((s,p)=>s+p[1],0))}
+function showRecovery(){document.getElementById("login").classList.add("hidden");document.getElementById("recovery").classList.remove("hidden");document.getElementById("recoveryEmail").value=document.getElementById("email").value.trim();document.getElementById("recoveryMsg").textContent="";}
+function showLogin(){document.getElementById("recovery").classList.add("hidden");document.getElementById("reset").classList.add("hidden");document.getElementById("login").classList.remove("hidden");document.getElementById("loginError").textContent="";}
+async function login(){const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;document.getElementById("loginError").textContent="";const {error}=await db.auth.signInWithPassword({email,password});if(error){document.getElementById("loginError").textContent="Email o contraseña incorrectos.";return}openApp();}
+async function sendRecovery(){const email=document.getElementById("recoveryEmail").value.trim();const msg=document.getElementById("recoveryMsg");msg.textContent="";if(!email){msg.textContent="Ingresá tu email.";return}const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error){msg.textContent=error.message;return}msg.style.color="#72e6a3";msg.textContent="Correo enviado. Revisá tu bandeja y abrí el enlace para crear una nueva contraseña.";}
+async function updatePassword(){const p1=document.getElementById("newPassword").value,p2=document.getElementById("newPassword2").value,msg=document.getElementById("resetMsg");msg.textContent="";msg.style.color="#ff8b8b";if(p1.length<6){msg.textContent="La contraseña debe tener al menos 6 caracteres.";return}if(p1!==p2){msg.textContent="Las contraseñas no coinciden.";return}const {error}=await db.auth.updateUser({password:p1});if(error){msg.textContent=error.message;return}msg.style.color="#72e6a3";msg.textContent="Contraseña actualizada. Entrando a PizzaMar...";setTimeout(()=>openApp(),700);}
+async function logout(){await db.auth.signOut();location.reload()}
+function openApp(){document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");document.getElementById("splash").classList.remove("hidden");document.getElementById("dashboard").classList.add("hidden");document.getElementById("today").textContent=new Date().toLocaleDateString("es-AR");loadSummary()}
+function openLocal(){document.getElementById("splash").classList.add("hidden");document.getElementById("dashboard").classList.remove("hidden");}
+async function saveOrder(){if(!cart.length)return document.getElementById("orderMsg").textContent="Agregá al menos un producto.";const {data:{user}}=await db.auth.getUser();const total=cart.reduce((s,p)=>s+p[1],0);const {error}=await db.from("orders").insert({customer_name:document.getElementById("customer").value||"Sin nombre",payment_method:document.getElementById("payment").value,total,status:"pending",user_id:user.id});if(error){document.getElementById("orderMsg").textContent=error.message;return}cart=[];renderCart();document.getElementById("customer").value="";document.getElementById("orderMsg").textContent="Comanda guardada correctamente.";loadSummary();}
+async function saveExpense(){const name=document.getElementById("expenseName").value,amount=Number(document.getElementById("expenseAmount").value);if(!name||!amount)return;const {data:{user}}=await db.auth.getUser();const {error}=await db.from("expenses").insert({concept:name,amount,user_id:user.id});document.getElementById("expenseMsg").textContent=error?error.message:"Gasto registrado correctamente.";if(!error){document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";}}
+async function loadSummary(){const {data,error}=await db.from("orders").select("total",{count:"exact"});if(error)return;const total=(data||[]).reduce((s,x)=>s+Number(x.total),0);document.getElementById("homeSales").textContent=money(total);document.getElementById("homeOrders").textContent=data.length;document.getElementById("salesTotal").textContent=money(total);document.getElementById("salesCount").textContent=data.length+" pedidos";}
+db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){document.getElementById("login").classList.add("hidden");document.getElementById("recovery").classList.add("hidden");document.getElementById("reset").classList.remove("hidden");}});
+(async()=>{const {data}=await db.auth.getSession();if(data.session){openApp()}else{document.getElementById("login").classList.remove("hidden")}renderProducts()})();
+</script>
+</body>
+</html>
