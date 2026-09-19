@@ -85,7 +85,7 @@ body{background:linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.58)),url('file_00000
       <button class="tile">⚙️<b>Configuración</b><small>Usuarios y sistema</small></button>
       <button class="tile" onclick="closeLocal()">🔴<b>Cerrar local</b><small>Cierre diario</small></button>
     </div>
-    <div class="panel"><div class="row"><b>Estado de hoy</b><span id="today"></span></div><p>Ventas: <b id="homeSales">$0</b> · Pedidos: <b id="homeOrders">0</b></p></div>
+    <div class="panel"><div class="row"><b>Resumen de septiembre</b><span id="today"></span></div><p>📅 Días registrados: <b id="homeDays">19</b></p><p>💰 Ventas: <b id="homeSales">$0</b> · 💸 Gastos: <b id="homeExpenses">$0</b></p><p>📊 Resultado: <b id="homeResult">$0</b></p></div>
   </div>
 
   <div id="orders" class="hidden"><button class="back" onclick="show('home')">← Volver</button><div class="panel"><h2>Nueva comanda</h2><div id="productButtons" class="products"></div><hr><div class="row"><h3>Pedido</h3><b id="total">$0</b></div><div id="cart"></div><label>Nombre del cliente</label><input id="customer" placeholder="Nombre"><label>Forma de pago</label><select id="payment"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select><button class="btn" onclick="saveOrder()">GUARDAR COMANDA</button><div id="orderMsg" class="error"></div></div></div>
@@ -129,7 +129,31 @@ function openApp(){document.getElementById("login").classList.add("hidden");docu
 function openLocal(){document.getElementById("splash").classList.add("hidden");document.getElementById("dashboard").classList.remove("hidden");}
 async function saveOrder(){if(!cart.length)return document.getElementById("orderMsg").textContent="Agregá al menos un producto.";const {data:{user}}=await db.auth.getUser();const total=cart.reduce((s,p)=>s+p[1],0);const {error}=await db.from("orders").insert({customer_name:document.getElementById("customer").value||"Sin nombre",payment_method:document.getElementById("payment").value,total,status:"pending",user_id:user.id});if(error){document.getElementById("orderMsg").textContent=error.message;return}cart=[];renderCart();document.getElementById("customer").value="";document.getElementById("orderMsg").textContent="Comanda guardada correctamente.";loadSummary();}
 async function saveExpense(){const name=document.getElementById("expenseName").value,amount=Number(document.getElementById("expenseAmount").value);if(!name||!amount)return;const {data:{user}}=await db.auth.getUser();const {error}=await db.from("expenses").insert({concept:name,amount,user_id:user.id});document.getElementById("expenseMsg").textContent=error?error.message:"Gasto registrado correctamente.";if(!error){document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";}}
-async function loadSummary(){const {data,error}=await db.from("orders").select("total",{count:"exact"});if(error)return;const total=(data||[]).reduce((s,x)=>s+Number(x.total),0);document.getElementById("homeSales").textContent=money(total);document.getElementById("homeOrders").textContent=data.length;document.getElementById("salesTotal").textContent=money(total);document.getElementById("salesCount").textContent=data.length+" pedidos";}
+async function loadSummary(){
+ const [{data:orders,error:ordersError},{data:expenses,error:expensesError}]=await Promise.all([
+   db.from("orders").select("total,created_at"),
+   db.from("expenses").select("amount,created_at")
+ ]);
+
+ if(ordersError||expensesError)return;
+
+ const sales=(orders||[]).reduce((s,x)=>s+Number(x.total),0);
+ const expensesTotal=(expenses||[]).reduce((s,x)=>s+Number(x.amount),0);
+ const result=sales-expensesTotal;
+
+ const days=new Set();
+ [...(orders||[]),...(expenses||[])].forEach(x=>{
+   days.add(new Date(x.created_at).toLocaleDateString("en-CA",{timeZone:"America/Argentina/Buenos_Aires"}));
+ });
+
+ document.getElementById("homeDays").textContent=days.size;
+ document.getElementById("homeSales").textContent=money(sales);
+ document.getElementById("homeExpenses").textContent=money(expensesTotal);
+ document.getElementById("homeResult").textContent=money(result);
+ document.getElementById("homeOrders").textContent=(orders||[]).length;
+ document.getElementById("salesTotal").textContent=money(sales);
+ document.getElementById("salesCount").textContent=(orders||[]).length+" pedidos";
+}
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){document.getElementById("login").classList.add("hidden");document.getElementById("recovery").classList.add("hidden");document.getElementById("reset").classList.remove("hidden");}});
 (async()=>{const {data}=await db.auth.getSession();if(data.session){openApp()}else{document.getElementById("login").classList.remove("hidden")}renderProducts()})();
 </script>
