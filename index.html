@@ -129,7 +129,34 @@ function openApp(){document.getElementById("login").classList.add("hidden");docu
 function openLocal(){document.getElementById("splash").classList.add("hidden");document.getElementById("dashboard").classList.remove("hidden");}
 async function saveOrder(){if(!cart.length)return document.getElementById("orderMsg").textContent="Agregá al menos un producto.";const {data:{user}}=await db.auth.getUser();const total=cart.reduce((s,p)=>s+p[1],0);const {error}=await db.from("orders").insert({customer_name:document.getElementById("customer").value||"Sin nombre",payment_method:document.getElementById("payment").value,total,status:"pending",user_id:user.id});if(error){document.getElementById("orderMsg").textContent=error.message;return}cart=[];renderCart();document.getElementById("customer").value="";document.getElementById("orderMsg").textContent="Comanda guardada correctamente.";loadSummary();}
 async function saveExpense(){const name=document.getElementById("expenseName").value,amount=Number(document.getElementById("expenseAmount").value);if(!name||!amount)return;const {data:{user}}=await db.auth.getUser();const {error}=await db.from("expenses").insert({concept:name,amount,user_id:user.id});document.getElementById("expenseMsg").textContent=error?error.message:"Gasto registrado correctamente.";if(!error){document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";}}
-async function loadSummary(){
+async async function loadSummary(){
+ const now=new Date();
+ const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+ const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,1).toISOString();
+
+ const [{data:orders,error:ordersError},{data:expenses,error:expensesError}]=await Promise.all([
+   db.from("orders").select("total,created_at").gte("created_at",monthStart).lt("created_at",monthEnd),
+   db.from("expenses").select("amount,created_at").gte("created_at",monthStart).lt("created_at",monthEnd)
+ ]);
+
+ if(ordersError||expensesError)return;
+
+ const sales=(orders||[]).reduce((s,x)=>s+Number(x.total),0);
+ const expensesTotal=(expenses||[]).reduce((s,x)=>s+Number(x.amount),0);
+ const result=sales-expensesTotal;
+
+ const days=new Set();
+ [...(orders||[]),...(expenses||[])].forEach(x=>{
+   days.add(new Date(x.created_at).toLocaleDateString("es-AR"));
+ });
+
+ document.getElementById("homeDays").textContent=days.size;
+ document.getElementById("homeSales").textContent=money(sales);
+ document.getElementById("homeExpenses").textContent=money(expensesTotal);
+ document.getElementById("homeResult").textContent=money(result);
+ document.getElementById("salesTotal").textContent=money(sales);
+ document.getElementById("salesCount").textContent=(orders||[]).length+" pedidos";
+}
  const [{data:orders,error:ordersError},{data:expenses,error:expensesError}]=await Promise.all([
    db.from("orders").select("total,created_at"),
    db.from("expenses").select("amount,created_at")
