@@ -277,7 +277,7 @@ async function saveOrder(){
   setMsg("orderMsg","Comanda guardada correctamente.","#72e6a3");
   loadSummary();
 }
-const name=expenseName.value.trim(),amount=Number(expenseAmount.value);
+async function saveExpense(){const name=expenseName.value.trim(),amount=Number(expenseAmount.value);
 if(!name||!amount){setMsg("expenseMsg","Completá concepto e importe.");return}
 const {data:{user}}=await db.auth.getUser();if(!user){showLogin();return}
 const {error}=await db.from("expenses").insert({concept:name,amount,user_id:user.id});
