@@ -245,12 +245,6 @@ productButtons.innerHTML=products.map((p,i)=>`<button class="product" onclick="a
 function addProduct(i){cart.push(products[i]);renderCart()}
 function renderCart(){
 if(!cart.length){cart.innerHTML="Todavía no agregaste productos.";cartTotal.textContent="$0";return}
-cart.innerHTML=cart.map((p,i)=>`<div class="row"><span>${esc(p[0])}</span><span><b>${money(p[1])}</b> <button class="btn danger" style="padding:5px 8px" onclick="removeCart(${i})">×</button></span></div>`).join("");
-cartTotal.textContent=money(cart.reduce((s,p)=>s+Number(p[1]),0));
-}
-function removeCart(i){cart.splice(i,1);renderCart()}
-async function saveOrder(){
-if(!cart.length){setMsg("orderMsg","Agregá al menos un producto.");return}
 const {data:{user}}=await db.auth.getUser();if(!user){showLogin();return}
 const total=cart.reduce((s,p)=>s+Number(p[1]),0);
 const {error}=await db.from("orders").insert({customer_name:customer.value.trim()||"Sin nombre",payment_method:payment.value,total,status:"pending",user_id:user.id});
