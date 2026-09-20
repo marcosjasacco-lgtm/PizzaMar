@@ -243,15 +243,40 @@ function renderProductButtons(){
 productButtons.innerHTML=products.map((p,i)=>`<button class="product" onclick="addProduct(${i})"><b>${esc(p[0])}</b><div class="price">${money(p[1])}</div></button>`).join("");
 }
 function addProduct(i){cart.push(products[i]);renderCart()}
-function renderCart(){
-if(!cart.length){cart.innerHTML="Todavía no agregaste productos.";cartTotal.textContent="$0";return}
-const {data:{user}}=await db.auth.getUser();if(!user){showLogin();return}
-const total=cart.reduce((s,p)=>s+Number(p[1]),0);
-const {error}=await db.from("orders").insert({customer_name:customer.value.trim()||"Sin nombre",payment_method:payment.value,total,status:"pending",user_id:user.id});
-if(error){setMsg("orderMsg",error.message);return}
-cart=[];renderCart();customer.value="";setMsg("orderMsg","Comanda guardada correctamente.","#72e6a3");loadSummary();
+async function renderCart(){
+  const cartBox=document.getElementById("cart");
+  if(!cart.length){
+    cartBox.innerHTML="Todavía no agregaste productos.";
+    cartTotal.textContent="$0";
+    return;
+  }
+  const total=cart.reduce((s,p)=>s+Number(p[1]),0);
+  cartBox.innerHTML=cart.map(p=>`<div class="row"><span>${esc(p[0])}</span><b>${money(p[1])}</b></div>`).join("");
+  cartTotal.textContent=money(total);
 }
-async function saveExpense(){
+
+async function saveOrder(){
+  if(!cart.length){
+    setMsg("orderMsg","Agregá al menos un producto.");
+    return;
+  }
+  const {data:{user}}=await db.auth.getUser();
+  if(!user){showLogin();return}
+  const total=cart.reduce((s,p)=>s+Number(p[1]),0);
+  const {error}=await db.from("orders").insert({
+    customer_name:customer.value.trim()||"Sin nombre",
+    payment_method:payment.value,
+    total,
+    status:"pending",
+    user_id:user.id
+  });
+  if(error){setMsg("orderMsg",error.message);return}
+  cart=[];
+  renderCart();
+  customer.value="";
+  setMsg("orderMsg","Comanda guardada correctamente.","#72e6a3");
+  loadSummary();
+}
 const name=expenseName.value.trim(),amount=Number(expenseAmount.value);
 if(!name||!amount){setMsg("expenseMsg","Completá concepto e importe.");return}
 const {data:{user}}=await db.auth.getUser();if(!user){showLogin();return}
