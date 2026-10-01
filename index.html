@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PizzaMar · Sistema de gestión</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./pm-api.js?v=entregas-1"></script>
 <style>
 :root{--red:#ef3b3b;--red2:#ff5a5a;--dark:#171717;--panel:#202020;--panel2:#292929;--text:#f5f5f5;--muted:#aaa;--line:#383838;--green:#63d49a;--yellow:#f4c95d}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);background:#111}
-body{background-image:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url("./file_00000000fd78820e9cb89f431afd043b.png")!important;background-position:center!important;background-size:cover!important;background-attachment:fixed!important;background-repeat:no-repeat!important;}
+body{background:linear-gradient(#0009,#0009),url("file_00000000a740820e954d7d12ddade573.png") center/cover fixed no-repeat}
 button,input,select{font:inherit}button{cursor:pointer}
 .hidden{display:none!important}
 .screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
@@ -18,7 +17,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 label{display:block;color:#bbb;font-size:14px;margin:14px 0 7px}input,select{width:100%;padding:14px 15px;border-radius:13px;border:1px solid #555;background:#f0f5ff;color:#161616;outline:none}
 .btn{border:0;border-radius:13px;padding:14px 18px;font-weight:800}.primary{background:var(--red);color:#fff}.primary:hover{background:var(--red2)}.ghost{background:#333;color:#fff}.danger{background:#6f2020;color:#fff}.link{display:block;background:none;border:0;color:#ff9999;text-decoration:underline;margin:20px auto 0}
 .msg{text-align:center;min-height:22px;color:#ff9292;margin-top:12px}
-.app{min-height:100vh;background:transparent}
+.app{min-height:100vh;background:#101010cc}
 .top{position:sticky;top:0;z-index:5;background:#171717ed;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .top .brand{font-weight:900;font-size:23px}.brand span{color:var(--red)}
 .top small{color:#aaa}.top-actions{display:flex;gap:8px}
@@ -36,7 +35,6 @@ label{display:block;color:#bbb;font-size:14px;margin:14px 0 7px}input,select{wid
 .cart{background:#151515;border-radius:15px;padding:12px;margin-top:12px}.cart .row{padding:7px 0;border-bottom:1px solid #333}.cart .row:last-child{border:0}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #333;font-size:14px}th{color:#aaa}
 .notice{padding:12px;border-radius:12px;background:#332f18;color:#f8dc78;margin-top:10px;font-size:14px}
-.online-order{border-left:4px solid var(--red)}.online-order.pending{border-left-color:var(--yellow)}.online-order.preparing{border-left-color:#72b7ff}.online-order.ready{border-left-color:var(--green)}.online-order.on_the_way,.online-order.picked_up{border-left-color:#b88cff}.online-order.delivered{border-left-color:#777}.online-order.rejected{border-left-color:#8d3c3c;opacity:.82}.status-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#333;color:#fff;font-size:12px;font-weight:800}.online-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.online-actions .btn{padding:10px 12px}.order-meta{color:#bbb;font-size:13px;line-height:1.5}.order-items{margin:10px 0;padding:10px;background:#151515;border-radius:12px}.online-empty{padding:18px;text-align:center;color:#aaa}
 </style>
 </head>
 <body>
@@ -87,37 +85,23 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px
   <main class="wrap">
     <section id="dashboard" class="section active">
       <div class="hero"><h1>Panel de control</h1><p>Resumen del mes actual y acceso rápido.</p></div>
-      
-      <div id="dashboardGrid" class="grid" style="margin-top:14px">
-        <button class="tile" onclick="go('orders')"><b>🧾 Nueva comanda</b><span>Cargar pedido y pago</span></button>
-        <button class="tile" onclick="go('onlineOrders')"><b>📲 Pedidos online</b><span>Aceptar y seguir pedidos de clientes</span></button>
-        <button class="tile admin-only" onclick="go('sales')"><b>💰 Ventas</b><span>Ver pedidos y facturación</span></button>
-        <button class="tile admin-only" onclick="go('stats')"><b>📊 Estadísticas</b><span>Analizar el mes</span></button>
-        <button class="tile admin-only" onclick="go('products')"><b>📦 Productos</b><span>Precios y catálogo</span></button>
-        <button class="tile admin-only" onclick="go('expenses')"><b>💸 Gastos</b><span>Cargar y consultar gastos</span></button>
-        <button class="tile admin-only" onclick="go('settings')"><b>⚙️ Configuración</b><span>Cuenta y sistema</span></button>
-      </div>
-    </section>
-
-    <section id="onlineOrders" class="section">
-      <button class="btn ghost back" onclick="go('dashboard')">← Volver</button>
-      <div class="row"><div><h2 style="margin:0">📲 Pedidos online</h2><p class="muted" style="margin-top:6px">Los pedidos se actualizan automáticamente.</p></div><button class="btn ghost" onclick="loadOnlineOrders(true)">Actualizar</button></div>
-      <div class="panel" style="margin-top:16px">
-        <h3>Repartidores</h3>
-        <p id="deliveryDriversMsg" role="status" class="muted"></p>
-        <div class="admin-only">
-          <label for="newDriverName">Nombre del repartidor</label>
-          <div class="row"><input id="newDriverName" maxlength="80" placeholder="Nombre" style="flex:1;min-width:160px"><button id="createDriverBtn" class="btn primary" onclick="registerDeliveryDriver()">Registrar repartidor</button></div>
-          <div id="driverAccessBox" hidden style="margin-top:12px">
-            <label for="driverAccessLink">Acceso privado del repartidor</label>
-            <input id="driverAccessLink" readonly onclick="this.select()">
-            <button class="btn ghost" onclick="copyDriverAccess()">Copiar enlace</button>
-            <p class="muted">Compartilo solo con ese repartidor. Guardá el enlace: no se puede recuperar desde la lista. Vence a los 30 días.</p>
-          </div>
+      <div class="panel">
+        <div class="row"><b id="summaryTitle">Resumen de septiembre</b><span class="muted" id="summaryDate"></span></div>
+        <div class="grid" style="margin-top:12px">
+          <div><span class="muted">📅 Días registrados</span><div class="big" id="homeDays">0</div></div>
+          <div><span class="muted">💰 Ventas</span><div class="big" id="homeSales">$0</div></div>
+          <div><span class="muted">💸 Gastos</span><div class="big" id="homeExpenses">$0</div></div>
+          <div><span class="muted">📊 Resultado</span><div class="big" id="homeResult">$0</div></div>
         </div>
       </div>
-      <div id="onlineOrdersMsg" class="msg"></div>
-      <div id="onlineOrderList" class="list"></div>
+      <div class="grid" style="margin-top:14px">
+        <button class="tile" onclick="go('orders')"><b>🧾 Nueva comanda</b><span>Cargar pedido y pago</span></button>
+        <button class="tile" onclick="go('sales')"><b>💰 Ventas</b><span>Ver pedidos y facturación</span></button>
+        <button class="tile" onclick="go('stats')"><b>📊 Estadísticas</b><span>Analizar el mes</span></button>
+        <button class="tile" onclick="go('products')"><b>📦 Productos</b><span>Precios y catálogo</span></button>
+        <button class="tile" onclick="go('expenses')"><b>💸 Gastos</b><span>Cargar y consultar gastos</span></button>
+        <button class="tile" onclick="go('settings')"><b>⚙️ Configuración</b><span>Cuenta y sistema</span></button>
+      </div>
     </section>
 
     <section id="orders" class="section">
@@ -168,18 +152,9 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px
       <div class="panel"><div class="row"><b>Gastos del mes</b><b id="expenseTotal">$0</b></div><div id="expenseList" class="list"></div></div>
     </section>
 
-    <section id="stats" class="section admin-only">
+    <section id="stats" class="section">
       <button class="btn ghost back" onclick="go('dashboard')">← Volver</button>
       <h2>📊 Estadísticas</h2>
-        <div class="panel">
-        <div class="row"><b id="summaryTitle">Resumen de septiembre</b><span class="muted" id="summaryDate"></span></div>
-        <div class="grid" style="margin-top:12px">
-          <div><span class="muted">📅 Días registrados</span><div class="big" id="homeDays">0</div></div>
-          <div><span class="muted">💰 Ventas</span><div class="big" id="homeSales">$0</div></div>
-          <div><span class="muted">💸 Gastos</span><div class="big" id="homeExpenses">$0</div></div>
-          <div><span class="muted">📊 Resultado</span><div class="big" id="homeResult">$0</div></div>
-        </div>
-      </div>
       <div class="panel">
         <div class="grid">
           <div><span class="muted">Facturación</span><div class="big" id="stSales">$0</div></div>
@@ -198,31 +173,6 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px
     <section id="products" class="section">
       <button class="btn ghost back" onclick="go('dashboard')">← Volver</button>
       <h2>📦 Productos</h2>
-      <div class="panel">
-  <h3>➕ Agregar producto</h3>
-
-  <label>Nombre</label>
-  <input id="newProductName" placeholder="Ej. Pizza primavera">
-
-  <label>Precio</label>
-  <input id="newProductPrice" type="number" min="0" placeholder="Ej. 15000">
-
-  <label>Categoría</label>
-  <select id="newProductCategory">
-    <option>Pizza</option>
-    <option>Empanadas</option>
-    <option>Hamburguesas</option>
-    <option>Bebidas</option>
-    <option>Promociones</option>
-    <option>Otros</option>
-  </select>
-
-  <button class="btn primary" style="width:100%;margin-top:14px" onclick="addNewProduct()">
-    GUARDAR PRODUCTO
-  </button>
-
-  <div id="productMsg" class="msg"></div>
-      </div>
       <div class="panel"><p class="muted">Los precios de este catálogo se guardan en este dispositivo. La facturación y los gastos siguen guardándose en Supabase.</p><div id="productManager" class="list"></div></div>
     </section>
 
@@ -239,8 +189,6 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px
 const SUPABASE_URL="https://nqfyxdptyqviyqlkulzq.supabase.co";
 const SUPABASE_KEY="sb_publishable_79TQSkWMhsZ8DJldFxAIxA_cubFt0l-";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const pmOnline=window.PizzaMarOnline(db);
-let onlinePoll=null;
 
 const defaultProducts=[
 ["Muzza",11000],["Muzza doble",12500],["Panceta ahumada",16500],["Súper especial",17000],
@@ -254,17 +202,9 @@ const defaultProducts=[
 ["Hamburguesa cheddar+panceta simple",9500],["Hamburguesa cheddar+panceta doble",12000],["Hamburguesa cheddar+panceta triple",14500],
 ["Hamburguesa completa",12500],["Coca 2.25L",6000],["Coca 1.25L",4500],["Coca lata",2000],["Coca 600ml",2500],
 ["Cepita",3500],["Manaos",2000],["Schneider 710ml",4500],["Brahma lata",3000],["Milanesa con fritas",23000],["Porción fritas",3500]
-,["PROMO 2 Muzzas",21000],
-["PROMO 2 Muzzas + Coca 2.25L",25500],
-["PROMO 2 Muzzas + 2 Brahma",26500],
-["PROMO 1 Muzza + 2 Brahma",15000],
-["PROMO 1 Muzza + 6 empanadas carne",21500],
-["PROMO 2 Especiales + 1 Muzza + Coca 2.25L",44000]];
-let products=JSON.parse(localStorage.getItem("pizzamar_products")||"[]");
-defaultProducts.forEach(p=>{if(!products.some(x=>x[0]===p[0]))products.push(p)});
-localStorage.setItem("pizzamar_products",JSON.stringify(products));
+];
+let products=JSON.parse(localStorage.getItem("pizzamar_products")||"null")||defaultProducts;
 let cart=[];
-let editingOrderId=null; 
 
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR",{minimumFractionDigits:0,maximumFractionDigits:2});
 const monthBounds=()=>{const n=new Date();return [new Date(n.getFullYear(),n.getMonth(),1).toISOString(),new Date(n.getFullYear(),n.getMonth()+1,1).toISOString()]};
@@ -275,32 +215,12 @@ function showRecovery(){login.classList.add("hidden");recovery.classList.remove(
 function showReset(){login.classList.add("hidden");recovery.classList.add("hidden");reset.classList.remove("hidden")}
 function setMsg(id,text,color){const e=document.getElementById(id);e.textContent=text;e.style.color=color||""}
 async function login(){
-  const em=email.value.trim(), pw=password.value;
-  setMsg("loginMsg","");
-
-  if(!em || !pw){
-    setMsg("loginMsg","Completá email y contraseña.");
-    return;
-  }
-
-  setMsg("loginMsg","Ingresando...","#72e6a3");
-
-  try{
-    const resultado=await Promise.race([
-      db.auth.signInWithPassword({email:em,password:pw}),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error("La conexión tardó demasiado. Revisá tu internet y probá nuevamente.")),10000))
-    ]);
-
-    if(resultado.error){
-      setMsg("loginMsg",resultado.error.message);
-      return;
-    }
-
-    openApp();
-
-  }catch(e){
-    setMsg("loginMsg",e.message || "No se pudo iniciar sesión.");
-  }
+setMsg("loginMsg","");
+const em=email.value.trim(),pw=password.value;
+if(!em||!pw){setMsg("loginMsg","Completá email y contraseña.");return}
+const {error}=await db.auth.signInWithPassword({email:em,password:pw});
+if(error){setMsg("loginMsg",error.message);return}
+openApp();
 }
 async function sendRecovery(){
 const em=recoveryEmail.value.trim();if(!em){setMsg("recoveryMsg","Ingresá tu email.");return}
@@ -316,298 +236,48 @@ if(error){setMsg("resetMsg",error.message);return}
 setMsg("resetMsg","Contraseña actualizada. Entrando a PizzaMar...","#72e6a3");
 setTimeout(openApp,700);
 }
-async function logout(){if(onlinePoll)clearInterval(onlinePoll);await db.auth.signOut();location.reload()}
-async function openApp(){
-  const {data:{user}} = await db.auth.getUser();
-  const role = user?.app_metadata?.role || "employee";
-  document.querySelectorAll(".admin-only").forEach(el => el.style.display = role === "admin" ? "" : "none");
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("recovery").classList.add("hidden");
-  document.getElementById("reset").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  document.getElementById("today").textContent=new Date().toLocaleDateString("es-AR");
-  renderProductButtons();
-  loadSummary();
-  if(onlinePoll)clearInterval(onlinePoll);
-  onlinePoll=setInterval(()=>{if(!document.getElementById("app").classList.contains("hidden"))loadOnlineOrders(false)},8000);
+async function logout(){await db.auth.signOut();location.reload()}
+function openApp(){login.classList.add("hidden");recovery.classList.add("hidden");reset.classList.add("hidden");app.classList.remove("hidden");today.textContent=new Date().toLocaleDateString("es-AR");loadSummary()}
+function go(id){document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");if(id==="sales")loadSales();if(id==="expenses")loadExpenses();if(id==="stats")loadStats();if(id==="products")renderProductManager();if(id==="orders")renderProductButtons();window.scrollTo(0,0)}
+function renderProductButtons(){
+productButtons.innerHTML=products.map((p,i)=>`<button class="product" onclick="addProduct(${i})"><b>${esc(p[0])}</b><div class="price">${money(p[1])}</div></button>`).join("");
 }
-function go(id){document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");if(id==="sales")loadSales();if(id==="expenses")loadExpenses();if(id==="stats")loadStats();if(id==="products")renderProductManager();if(id==="orders")renderProductButtons();if(id==="onlineOrders")loadOnlineOrders(true);window.scrollTo(0,0)}
-async function renderProductButtons(){
-  const {data,error}=await db.from("products")
-    .select("name,price,category")
-    .eq("active",true)
-    .order("category")
-    .order("name");
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  products=(data||[]).map(p=>[p.name,Number(p.price),p.category]);
-
-  productButtons.innerHTML=products.map((p,i)=>
-    `<button class="product" onclick="addProduct(${i})">
-      <b>${esc(p[0])}</b>
-      <div class="price">${money(p[1])}</div>
-    </button>`
-  ).join("");
-}
-async function addNewProduct(){
-  const name=newProductName.value.trim();
-  const price=Number(newProductPrice.value);
-  const category=newProductCategory.value;
-
-  if(!name || !price){
-    setMsg("productMsg","Completá nombre y precio.");
-    return;
-  }
-
-  const {error}=await db.from("products").insert({
-    name:name,
-    price:price,
-    category:category,
-    active:true
-  });
-
-  if(error){
-    setMsg("productMsg",error.message);
-    return;
-  }
-
-  newProductName.value="";
-  newProductPrice.value="";
-  setMsg("productMsg","Producto agregado correctamente.","#72e6a3");
-
-  await renderProductButtons();
-  renderProductManager();
-}  
 function addProduct(i){cart.push(products[i]);renderCart()}
-function renderCart(){
-if(!cart.length){cart.innerHTML="Todavía no agregaste productos.";cartTotal.textContent="$0";return}
-cart.innerHTML=cart.map((p,i)=>`<div class="row"><span>${esc(p[0])}</span><span><b>${money(p[1])}</b> <button class="btn danger" style="padding:5px 8px" onclick="removeCart(${i})">×</button></span></div>`).join("");
-cartTotal.textContent=money(cart.reduce((s,p)=>s+Number(p[1]),0));
+async function renderCart(){
+  const cartBox=document.getElementById("cart");
+  if(!cart.length){
+    cartBox.innerHTML="Todavía no agregaste productos.";
+    cartTotal.textContent="$0";
+    return;
+  }
+  const total=cart.reduce((s,p)=>s+Number(p[1]),0);
+  cartBox.innerHTML=cart.map(p=>`<div class="row"><span>${esc(p[0])}</span><b>${money(p[1])}</b></div>`).join("");
+  cartTotal.textContent=money(total);
 }
-function removeCart(i){cart.splice(i,1);renderCart()}
-async function editOrder(id){
-  const {data,error}=await db.from("orders")
-    .select("id,customer_name,payment_method,items")
-    .eq("id",id)
-    .single();
 
-  if(error){
-    alert("No se pudo abrir el pedido: "+error.message);
-    return;
-  }
-
-  if(!data.items || !data.items.length){
-    alert("Este pedido es anterior al sistema de edición y no tiene el detalle de productos guardado.");
-    return;
-  }
-
-  editingOrderId=data.id;
-
-  cart=data.items.map(p=>[
-    p.name,
-    Number(p.price),
-    p.category||null
-  ]);
-
-  customer.value=data.customer_name||"";
-  payment.value=data.payment_method||"Efectivo";
-
-  renderCart();
-  go("orders");
-} 
-async function deleteOrder(id){
-  const confirmar=confirm("¿Seguro que querés eliminar este pedido? Esta acción no se puede deshacer.");
-
-  if(!confirmar)return;
-
-  const {error}=await db.from("orders")
-    .delete()
-    .eq("id",id);
-
-  if(error){
-    alert("No se pudo eliminar el pedido: "+error.message);
-    return;
-  }
-
-  await loadSales();
-  await loadSummary();
-
-  alert("Pedido eliminado correctamente.");
-}
-  async function saveOrder(){
+async function saveOrder(){
   if(!cart.length){
     setMsg("orderMsg","Agregá al menos un producto.");
     return;
   }
-
   const {data:{user}}=await db.auth.getUser();
-  if(!user){
-    showLogin();
-    return;
-  }
-
+  if(!user){showLogin();return}
   const total=cart.reduce((s,p)=>s+Number(p[1]),0);
-
-  const items=cart.map(p=>({
-    name:p[0],
-    price:Number(p[1]),
-    category:p[2]||null
-  }));
-
-  const wasEditing=editingOrderId!==null;
-  let result;
-
-  if(wasEditing){
-    result=await db.from("orders").update({
-      customer_name:customer.value.trim()||"Sin nombre",
-      payment_method:payment.value,
-      total:total,
-      items:items,
-      edited_at:new Date().toISOString(),
-      edited_by:user.id
-    }).eq("id",editingOrderId);
-  }else{
-    result=await db.from("orders").insert({
-      customer_name:customer.value.trim()||"Sin nombre",
-      payment_method:payment.value,
-      total:total,
-      status:"pending",
-      user_id:user.id,
-      items:items
-    });
-  }
-
-  if(result.error){
-    setMsg("orderMsg",result.error.message);
-    return;
-  }
-
-  editingOrderId=null;
+  const {error}=await db.from("orders").insert({
+    customer_name:customer.value.trim()||"Sin nombre",
+    payment_method:payment.value,
+    total,
+    status:"pending",
+    user_id:user.id
+  });
+  if(error){setMsg("orderMsg",error.message);return}
   cart=[];
   renderCart();
   customer.value="";
-
-  setMsg(
-    "orderMsg",
-    wasEditing ? "Pedido actualizado correctamente." : "Comanda guardada correctamente.",
-    "#72e6a3"
-  );
-
+  setMsg("orderMsg","Comanda guardada correctamente.","#72e6a3");
   loadSummary();
-
-  if(wasEditing){
-    await loadSales();
-    go("sales");
-  }
 }
-function onlineStatusKey(status){
-  return String(status||"pending").toLowerCase().replace(/[ -]+/g,"_");
-}
-function onlineStatusLabel(status){
-  const key=onlineStatusKey(status);
-  return ({pending:"Pendiente",accepted:"En preparación",preparing:"En preparación",ready:"Pedido listo",on_the_way:"En camino",picked_up:"En camino",in_transit:"En camino",delivered:"Entregado / finalizado",rejected:"Rechazado"})[key]||status||"Pendiente";
-}
-function onlineItemText(order){
-  return (order.items||[]).map(item=>`${Number(item.quantity||1)} × ${esc(item.name)}${item.notes?` · ${esc(item.notes)}`:""}`).join("<br>")||"Detalle no disponible";
-}
-function onlineOrderActions(order){
-  const key=onlineStatusKey(order.status),id=String(order.id||"").replace(/'/g,"\\'"),current=key.replace(/'/g,"\\'");
-  if(key==="pending")return `<button class="btn primary" onclick="moveOnlineOrder('${id}','preparing','Aceptar pedido','${current}')">✅ Aceptar y preparar</button><button class="btn danger" onclick="moveOnlineOrder('${id}','rejected','Rechazar pedido','${current}')">✕ Rechazar</button>`;
-  if(key==="accepted"||key==="preparing")return `<button class="btn primary" onclick="moveOnlineOrder('${id}','ready','Pedido listo','${current}')">🍕 Pedido listo</button>`;
-  if(key==="ready")return `<label for="driver-${esc(id)}">Repartidor</label><select id="driver-${esc(id)}" onchange="deliverySelections[this.dataset.order]=this.value" data-order="${esc(id)}"><option value="">Seleccionar repartidor</option>${deliveryDrivers.map(d=>`<option value="${esc(d.id)}" ${String(deliverySelections[id]||order.driver_id||"")===String(d.id)?"selected":""}>${esc(d.name)}</option>`).join("")}</select><button class="btn primary" onclick="moveOnlineOrder('${id}','on_the_way','Marcar retirado','${current}')">🛵 Marcar retirado</button>`;
-  if(key==="on_the_way"||key==="picked_up"||key==="in_transit")return `<button class="btn primary" onclick="moveOnlineOrder('${id}','delivered','Marcar entregado','${current}')">✅ Marcar entregado</button>`;
-  return "";
-}
-let deliveryDrivers = [];
-const deliverySelections = Object.create(null);
-const deliveryBusy = new Set();
-async function refreshDeliveryDrivers(){
-  const msg=document.getElementById("deliveryDriversMsg");
-  try {
-    const result=await pmOnline.listDrivers();
-    if(result.error)throw result.error;
-    deliveryDrivers=(result.data||[]).filter(d=>d.active===true && new Date(d.expires_at)>new Date());
-    msg.textContent=deliveryDrivers.length ? `${deliveryDrivers.length} repartidor(es) disponibles.` : "No hay repartidores activos. Un administrador debe registrar uno.";
-  } catch(error){deliveryDrivers=[];msg.textContent="No se pudieron cargar los repartidores: "+(error.message||error);}
-}
-async function registerDeliveryDriver(){
-  const input=document.getElementById("newDriverName"),btn=document.getElementById("createDriverBtn"),msg=document.getElementById("deliveryDriversMsg");
-  const name=input.value.trim();
-  if(!name){msg.textContent="Ingresá el nombre del repartidor.";return;}
-  if(btn.disabled)return;
-  btn.disabled=true;
-  try {
-    const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,"0")).join("");
-    const result=await pmOnline.createDriver(name,token);
-    if(result.error)throw result.error;
-    if(!result.data?.id)throw new Error("No se recibió la confirmación del registro. Actualizá la lista antes de reintentar.");
-    const link=new URL("./repartidor.html",location.href);link.hash=new URLSearchParams({token}).toString();
-    document.getElementById("driverAccessLink").value=link.href;
-    document.getElementById("driverAccessBox").hidden=false;
-    input.value="";
-    await loadOnlineOrders(true);
-  }catch(error){msg.textContent="No se pudo registrar: "+(error.message||error);}
-  finally{btn.disabled=false;}
-}
-async function copyDriverAccess(){
-  const input=document.getElementById("driverAccessLink");
-  try{await navigator.clipboard.writeText(input.value);document.getElementById("deliveryDriversMsg").textContent="Enlace copiado.";}
-  catch{input.focus();input.select();document.getElementById("deliveryDriversMsg").textContent="Mantené presionado el enlace y elegí Copiar.";}
-}
-let onlineLoading=false;
-async function loadOnlineOrders(showErrors=true){
-  if(onlineLoading||deliveryBusy.size)return;
-  onlineLoading=true;
-  try {
-  await refreshDeliveryDrivers();
-  const {data,error}=await pmOnline.listStaffOrders();
-  if(error){if(showErrors)onlineOrdersMsg.textContent="No se pudieron cargar los pedidos online: "+(error.message||error);return}
-  const rows=(data||[]).filter(x=>x&&x.id!=null).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  const active=rows.filter(x=>!["delivered","rejected"].includes(onlineStatusKey(x.status)));
-  const finished=rows.filter(x=>["delivered","rejected"].includes(onlineStatusKey(x.status))).slice(0,10);
-  const visible=[...active,...finished];
-  onlineOrdersMsg.textContent="";
-  if(!visible.length){onlineOrderList.innerHTML='<div class="panel online-empty">No hay pedidos online todavía.</div>';return}
-  onlineOrderList.innerHTML=visible.map(order=>{
-    const key=onlineStatusKey(order.status),when=new Date(order.created_at).toLocaleString("es-AR");
-    const fulfillment=order.fulfillment==="pickup"?"Retiro en el local":"Delivery";
-    const address=order.fulfillment==="pickup"?"Retiro en Ecuador 8348":[order.address,order.cross_streets,order.neighborhood].filter(Boolean).join(" · ");
-    return `<article class="item online-order ${key}">
-      <div class="row"><div><b>Pedido online #${esc(order.id)}</b><div class="order-meta">${esc(when)} · ${esc(fulfillment)}</div></div><span class="status-pill">${esc(onlineStatusLabel(order.status))}</span></div>
-      <div class="order-meta" style="margin-top:10px"><b>${esc(order.customer_name||"Sin nombre")}</b>${order.customer_phone?` · ${esc(order.customer_phone)}`:""}<br>${esc(address||"Sin dirección")}</div>
-      <div class="order-items">${onlineItemText(order)}</div>
-      <div class="row"><span>${esc(order.payment_method||"Pago")}</span><b>${money(order.total)}</b></div>
-      <div class="online-actions">${onlineOrderActions(order)}</div>
-    </article>`;
-  }).join("");
-  } catch(error){if(showErrors)onlineOrdersMsg.textContent="No se pudieron cargar los pedidos: "+(error.message||error);}
-  finally{onlineLoading=false;}
-}
-async function moveOnlineOrder(id,status,actionLabel,currentStatus){
-  if(deliveryBusy.has(id))return;
-  if(status==="rejected"&&!confirm("¿Rechazar este pedido online?"))return;
-  const driverId=status==="on_the_way"?document.getElementById("driver-"+id)?.value:null;
-  if(status==="on_the_way"&&!driverId){onlineOrdersMsg.textContent="Seleccioná un repartidor activo antes de marcar retirado.";return;}
-  deliveryBusy.add(id);
-  onlineOrderList.querySelectorAll("button").forEach(b=>b.disabled=true);
-  let success=false;
-  try{
-    const {error}=await pmOnline.updateStatus(id,status,currentStatus,driverId);
-    if(error)throw error;
-    success=true;
-  }catch(error){onlineOrdersMsg.textContent="No se pudo actualizar el pedido: "+(error.message||error);}
-  finally{deliveryBusy.delete(id);onlineOrderList.querySelectorAll("button").forEach(b=>b.disabled=false);}
-  if(success){
-    await loadOnlineOrders(false);
-    onlineOrdersMsg.textContent=`${actionLabel} realizado correctamente.`;
-  }
-}
-async function saveExpense(){
-const name=expenseName.value.trim(),amount=Number(expenseAmount.value);
+async function saveExpense(){const name=expenseName.value.trim(),amount=Number(expenseAmount.value);
 if(!name||!amount){setMsg("expenseMsg","Completá concepto e importe.");return}
 const {data:{user}}=await db.auth.getUser();if(!user){showLogin();return}
 const {error}=await db.from("expenses").insert({concept:name,amount,user_id:user.id});
@@ -632,29 +302,8 @@ const [start,end]=monthBounds();
 const {data,error}=await db.from("orders").select("id,created_at,customer_name,payment_method,total,status").gte("created_at",start).lt("created_at",end).order("created_at",{ascending:false});
 if(error){salesList.innerHTML=`<div class="item">${esc(error.message)}</div>`;return}
 const total=(data||[]).reduce((s,x)=>s+Number(x.total),0);salesTotal.textContent=money(total);salesCount.textContent=(data||[]).length+" pedidos";avgTicket.textContent=money((data||[]).length?total/data.length:0);
-salesList.innerHTML=(data||[]).slice(0,100).map(x=>`
-  <div class="item">
-    <div class="row">
-      <strong>${money(x.total)}</strong>
-      <span class="muted">${new Date(x.created_at).toLocaleString("es-AR")}</span>
-    </div>
-
-    <small>
-      ${esc(x.customer_name||"Sin nombre")} ·
-      ${esc(x.payment_method||"")} ·
-      ${esc(x.status||"pending")}
-    </small>
-
-    <button class="btn ghost" style="margin-top:10px"
-      onclick="editOrder(${x.id})">
-      ✏️ Editar pedido
- </button>
- <button class="btn danger admin-only" style="margin-top:10px;margin-left:8px"
-  onclick="deleteOrder(${x.id})">
-  🗑️ Eliminar pedido
-</button>   
-  </div>
-`).join("") || '<div class="item muted">No hay pedidos este mes.</div>';}
+salesList.innerHTML=(data||[]).slice(0,100).map(x=>`<div class="item"><div class="row"><strong>${money(x.total)}</strong><span class="muted">${new Date(x.created_at).toLocaleString("es-AR")}</span></div><small>${esc(x.customer_name||"Sin nombre")} · ${esc(x.payment_method||"")} · ${esc(x.status||"pending")}</small></div>`).join("")||'<div class="item muted">No hay pedidos este mes.</div>';
+}
 async function loadExpenses(){
 const [start,end]=monthBounds();
 const {data,error}=await db.from("expenses").select("id,created_at,concept,amount").gte("created_at",start).lt("created_at",end).order("created_at",{ascending:false});
@@ -671,70 +320,10 @@ stSales.textContent=money(sales);stExpenses.textContent=money(ex);stResult.textC
 const map={};(orders||[]).forEach(x=>map[x.payment_method]=(map[x.payment_method]||0)+Number(x.total));
 paymentStats.innerHTML=Object.entries(map).map(([k,v])=>`<div class="item row"><span>${esc(k)}</span><b>${money(v)}</b></div>`).join("")||'<div class="item muted">Sin ventas.</div>';
 }
-async function renderProductManager(){
-  const {data,error}=await db.from("products")
-    .select("id,name,price,category,active")
-    .order("category")
-    .order("name");
-
-  if(error){
-    productManager.innerHTML=`<div class="item">${esc(error.message)}</div>`;
-    return;
-  }
-
-  productManager.innerHTML=(data||[]).map(p=>`
-    <div class="item">
-      <div class="row">
-        <div>
-          <b>${esc(p.name)}</b>
-          <div class="muted">${esc(p.category||"Otros")}</div>
-        </div>
-
-        <button class="btn ${p.active ? "primary" : "ghost"}"
-          onclick="toggleProduct(${p.id},${!p.active})">
-          ${p.active ? "🟢 ON" : "🔴 OFF"}
-        </button>
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <input id="price_${p.id}" type="number" min="0" value="${Number(p.price)}">
-        <button class="btn ghost" onclick="changePrice(${p.id})">
-          Guardar precio
-        </button>
-      </div>
-    </div>
-  `).join("");
+function renderProductManager(){
+productManager.innerHTML=products.map((p,i)=>`<div class="item"><div class="row"><b>${esc(p[0])}</b><input id="price_${i}" type="number" value="${p[1]}" style="max-width:140px"></div><button class="btn ghost" onclick="changePrice(${i})">Guardar precio</button></div>`).join("");
 }
-async function changePrice(id){
-  const v=Number(document.getElementById("price_"+id).value);
-
-  if(v<=0)return;
-
-  const {error}=await db.from("products")
-    .update({price:v})
-    .eq("id",id);
-
-  if(error){
-    alert("Error al guardar precio: "+error.message);
-    return;
-  }
-
-  await renderProductButtons();
-  await renderProductManager();
-}
-async function toggleProduct(id,newState){
-  const {error}=await db.from("products")
-    .update({active:newState})
-    .eq("id",id);
-
-  if(error){
-    alert("Error al cambiar estado: "+error.message);
-    return;
-  }
-
-  await renderProductButtons();
-  await renderProductManager();
-}  
+function changePrice(i){const v=Number(document.getElementById("price_"+i).value);if(v>0){products[i][1]=v;localStorage.setItem("pizzamar_products",JSON.stringify(products));renderProductButtons();renderProductManager()}}
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY")showReset();else if(session&&!app.classList.contains("hidden"))loadSummary()});
 (async()=>{const {data:{session}}=await db.auth.getSession();if(session)openApp();renderProductButtons()})();
 </script>
